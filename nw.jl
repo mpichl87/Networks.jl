@@ -1,5 +1,5 @@
 __precompile__()
-module nw 
+module Networks 
 
 typealias F Float64
 typealias C Complex{ F }
