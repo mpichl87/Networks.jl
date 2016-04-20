@@ -6,7 +6,18 @@ typealias C Complex{ F }
 
 const Z0 = 50.0
 export Z0
+rl = linspace( 10, 100, 100 )
+	res = map( ui_lp, rl )
 
+	abs( res[1][2][1:5] )
+	uc = map( c -> map( x -> abs( x[ 2 ][ c ] ), res ), [1:5] )
+	ic = map( c -> map( x -> abs( x[ 3 ][ c ] ), res ), [1:5] )
+	pc = map( c -> map( x -> abs( x[ 4 ][ c ] ), res ), [1:5] )
+
+
+	map( x -> plot( rl, x ), uc )
+	ylabel( "UC1-5 (V)")
+	xlabel( "RL (Ω)")
 const UI = [ 	0.0		1.0 	0.0 0.0;
 				1.0		0.0		0.0	0.0;
 				√(2Z0) 	√(2Z0)	0.0	0.0;
@@ -177,8 +188,8 @@ instr_shunt( sh ) 	= connect( sh, 1, UI, 2 )
 instr_through( th ) = connect( connect( th, 1, UI2, 2 ), 1, 3 )
 export instr_shunt, instr_through
 
-parallel( sh1, sh2 ) = nw.connect( nw.connect( Tee, 1, sh1, 1 ), 1, sh2, 1 )
-serial( th, sh )   	 = nw.connect( th, 2, sh, 1 )
+parallel( sh1, sh2 ) = connect( connect( Tee, 1, sh1, 1 ), 1, sh2, 1 )
+serial( th, sh )   	 = connect( th, 2, sh, 1 )
 export parallel, serial
 
 y( z ) = 1 / z
