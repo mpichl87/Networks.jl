@@ -4,7 +4,7 @@ module Networks
 typealias F Float64
 typealias C Complex{ F }
 
-const Z0 = 1.0#50.0
+const Z0 = 50.0
 export Z0
 
 const UI = [ 	0.0		1.0 	0.0 0.0;
