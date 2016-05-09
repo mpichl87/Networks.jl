@@ -7,64 +7,59 @@ typealias C Complex{ F }
 const Z0 = 50.0
 export Z0
 
-const UI = [ 	0.0		1.0 	0.0 0.0;
-				1.0		0.0		0.0	0.0;
-				√(2Z0) 	√(2Z0)	0.0	0.0;
-				√2/√Z0 -√2/√Z0	0.0	0.0	]
-export UI
+type Network{ T }
+	sparams::Matrix
+	measures::Matrix
+	labels::Vector{ AbstractString }
 
-const UI2 = [ 	0.0			1.0 		0.0 		0.0 		0.0	0.0;
-				1.0			0.0			0.0			0.0 		0.0	0.0;
-				0.0			0.0			0.0			1.0 		0.0	0.0;
-				0.0			0.0			1.0			0.0 		0.0	0.0;
-				√(2Z0) 		√(2Z0)		-√(2Z0) 	-√(2Z0) 	0.0	0.0;
-				1/√(2Z0)	-1/√(2Z0)	1/√(2Z0)	-1/√(2Z0) 	0.0	0.0  ]
-export UI2
-
- 
-const Tee = [ 	-1.0/3  2.0/3  2.0/3;
-				 2.0/3 -1.0/3  2.0/3;
-				 2.0/3  2.0/3 -1.0/3 ]
-export Tee
-
-shunt( z, z0 ) = [ ( z - z0 ) / ( z + z0 ) ]
-shunt( z ) = shunt( z, Z0 )
-export shunt
-
-through( z, z0 ) = 1 / ( z + 2z0 ) * [ z 2z0; 2z0 z ]
-through( z ) = through( z, Z0 )
-export through
-
-type Network
-	sparams
-	measures
-	labels
+	function Network( sparams, measures, labels )
+		srows = size( sparams, 1 )
+		scols = srows == 0 ? 0 : size( sparams, 2 )
+		mrows = size( measures, 1 )
+		mcols = mrows == 0 ? scols : size( measures, 2 )
+		lrows = size( labels, 1 )
+		srows != scols ? error( "sparams Matrix not square" ) :
+		scols != mcols ? error( "number of columns of sparams and measures differ") :
+		mrows != lrows ? error( "number of rows of measures and labels differ") :
+		new( sparams, measures, labels )
+	end
 end
-
-Network( sparams::Array ) = Network( sparams, [], [] )
+function Network{ T }( sparams::Matrix{ T }, measures = Matrix{ T }(), labels = Vector{ AbstractString }() ) 
+	Network{ T }( sparams, measures, labels )
+end
 export Network
-const UInw = [  0.0			1.0;
+
+const UIsp = [  0.0			1.0;
 				1.0			0.0 ]
 const UImeas = [ 	√(2Z0) 	√(2Z0);
 					√2/√Z0 -√2/√Z0	]
 const UIlab = [ "U", "I" ]
+const UI = Network( UIsp, UImeas, UIlab )
+export UI
 
-const UINW = Network( UInw, UImeas, UIlab )
-export UINW
-
-const UI2nw = [0.0			1.0 		0.0 		0.0;
+const UI2sp = [ 0.0			1.0 		0.0 		0.0;
 				1.0			0.0			0.0			0.0;
 				0.0			0.0			0.0			1.0;
 				0.0			0.0			1.0			0.0 ]
 const UI2meas = [ 	√(2Z0) 		√(2Z0)		-√(2Z0) 	-√(2Z0);  
 					1/√(2Z0)	-1/√(2Z0)	1/√(2Z0)	-1/√(2Z0)	]
 const UI2lab = [ "U", "I" ]
+const UI2 = Network( UI2sp, UI2meas, UI2lab )
+export UI2
+ 
+const TEEsp = [ 	-1.0/3  2.0/3  2.0/3;
+				 2.0/3 -1.0/3  2.0/3;
+				 2.0/3  2.0/3 -1.0/3 ]
+const Tee = Network( TEEsp )
+export Tee
 
-const UI2NW = Network( UI2nw, UI2meas, UI2lab )
-export UI2NW
+shunt( z, z0 ) = Network( [ ( z - z0 ) / ( z + z0 ) ] )
+shunt( z ) = shunt( z, Z0 )
+export shunt
 
-const TEENW = Network( Tee )
-export TEENW
+through( z, z0 ) = Network( 1 / ( z + 2z0 ) * [ z 2z0; 2z0 z ] )
+through( z ) = through( z, Z0 )
+export through
 
 function connect( SN::Network, k::Int, TN::Network, l::Int ) 
 	S = SN.sparams
@@ -273,12 +268,12 @@ function connect( SN::Network, k::Int, l::Int )
 end
 export connect
 
-instr_shunt( sh ) 	= connect( sh, 1, UINW, 2 )
-instr_through( th ) = connect( connect( th, 1, UI2NW, 2 ), 1, 3 )
+instr_shunt( sh::Network ) 	= connect( sh, 1, UI, 2 )
+instr_through( th::Network ) = connect( connect( th, 1, UI2, 2 ), 1, 3 )
 export instr_shunt, instr_through
 
-parallel( sh1, sh2 ) = connect( connect( TEENW, 1, sh1, 1 ), 1, sh2, 1 )
-serial( th, sh )   	 = connect( th, 2, sh, 1 )
+parallel( sh1::Network, sh2::Network ) = connect( connect( Tée, 1, sh1, 1 ), 1, sh2, 1 )
+serial( th::Network, sh::Network )   	 = connect( th, 2, sh, 1 )
 export parallel, serial
 
 y( z ) = 1 / z
