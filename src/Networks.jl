@@ -7,7 +7,7 @@ typealias C Complex{ F }
 const Z0 = 50.0
 export Z0
 
-type Network{ T }
+type Network{ T <: Number }
 	sparams::Array{ T, 2 }
 	measures::Array{ T, 2 }
 	labels::Array{ ASCIIString, 1 }
@@ -59,7 +59,7 @@ through( z, z0 ) = Network( 1 / ( z + 2z0 ) * [ z 2z0; 2z0 z ] )
 through( z ) = through( z, Z0 )
 export through
 
-function connect( SN::Network{ S }, k::Int, TN::Network{ T }, l::Int ) 
+function connect( SN::Network, k::Int, TN::Network, l::Int ) 
 	S = SN.sparams
 	T = TN.sparams
 	nS = size( S )[ 1 ]
@@ -143,42 +143,46 @@ function connect( SN::Network{ S }, k::Int, TN::Network{ T }, l::Int )
 	nB = size( B )[ 1 ]
 	nM = nA + nB
 	measures = zeros( C, nM, nR )
-	Aik = A[ :, k]
-	Bil = B[ :, l]
-	for i in 1:nA
-		fak2 = Aik[ i ] * invden
-		fak1 =  Tll * fak2
-		for j in 1:k - 1
-			measures[ i, 	j 			] = A[ i, j ] + Skj[ j ] * fak1
+	if nA > 0
+		Aik = A[ :, k]
+		for i in 1:nA
+			fak2 = Aik[ i ] * invden
+			fak1 =  Tll * fak2
+			for j in 1:k - 1
+				measures[ i, 	j 			] = A[ i, j ] + Skj[ j ] * fak1
+			end
+				for j in k + 1:nS
+				measures[ i, 	j - 1 		] = A[ i, j ] + Skj[ j ] * fak1
+			end
+			for j in 1:l - 1
+				measures[ i, 	j + nS - 1 ] = Tlj[ j ] * fak2
+			end
+			for j in l + 1:nT 
+				measures[ i, 	j + nS - 2 ] = Tlj[ j ] * fak2
+			end
 		end
+	end
+	if nB > 0
+		Bil = B[ :, l]
+		for i in 1:nB
+			fak1 = Bil[ i ] * invden 
+			fak2 = Skk * fak1
+			for j in 1:k - 1
+				measures[ i + nA, j 			] = Skj[ j ] * fak1
+			end
 			for j in k + 1:nS
-			measures[ i, 	j - 1 		] = A[ i, j ] + Skj[ j ] * fak1
-		end
-		for j in 1:l - 1
-			measures[ i, 	j + nS - 1 ] = Tlj[ j ] * fak2
-		end
-		for j in l + 1:nT 
-			measures[ i, 	j + nS - 2 ] = Tlj[ j ] * fak2
+				measures[ i + nA, j - 1 		] = Skj[ j ] * fak1
+			end
+			for j in 1:l - 1
+				measures[ i + nA, j + nS - 1	] = B[ i, j ] + Tlj[ j ] * fak2
+			end
+			for j in l + 1:nT
+				measures[ i + nA, j + nS - 2 	] = B[ i, j ] + Tlj[ j ] * fak2
+			end
+			
 		end
 	end
-	for i in 1:nB
-		fak1 = Bil[ i ] * invden 
-		fak2 = Skk * fak1
-		for j in 1:k - 1
-			measures[ i + nA, j 			] = Skj[ j ] * fak1
-		end
-		for j in k + 1:nS
-			measures[ i + nA, j - 1 		] = Skj[ j ] * fak1
-		end
-		for j in 1:l - 1
-			measures[ i + nA, j + nS - 1	] = B[ i, j ] + Tlj[ j ] * fak2
-		end
-		for j in l + 1:nT
-			measures[ i + nA, j + nS - 2 	] = B[ i, j ] + Tlj[ j ] * fak2
-		end
-		
-	end
-	labels 		= [ S.labels; 	T.labels ]
+	labels 		= [ SN.labels; 	TN.labels ]
 	Network( sparams, measures, labels )
 end
 
@@ -266,11 +270,11 @@ function connect( SN::Network, k::Int, l::Int )
 end
 export connect
 
-instr_shunt( sh::Network ) 	= connect( sh, 1, UI, 2 )
+instr_shunt( sh::Network ) = connect( sh, 1, UI, 2 )
 instr_through( th::Network ) = connect( connect( th, 1, UI2, 2 ), 1, 3 )
 export instr_shunt, instr_through
 
-parallel( sh1::Network, sh2::Network ) = connect( connect( Tée, 1, sh1, 1 ), 1, sh2, 1 )
+parallel( sh1::Network, sh2::Network ) = connect( connect( Tee, 1, sh1, 1 ), 1, sh2, 1 )
 serial( th::Network, sh::Network )   	 = connect( th, 2, sh, 1 )
 export parallel, serial
 
