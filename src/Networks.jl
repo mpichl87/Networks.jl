@@ -1,9 +1,6 @@
 __precompile__()
 module Networks 
 
-typealias F Float64
-typealias C Complex{ F }
-
 const Z0 = 50.0
 export Z0
 
@@ -11,6 +8,7 @@ type Network{ T <: Number }
 	sparams::Array{ T, 2 }
 	measures::Array{ T, 2 }
 	labels::Array{ ASCIIString, 1 }
+	# index::Dict{ ASCIIString, Int64 }
 end
 function Network{ S, T }( sparams::Array{ S, 2 }, measures::Array{ T, 2 }, labels::Array{ ASCIIString, 1 } = ASCIIString[] )
 	s, m = promote( sparams, measures )
@@ -19,33 +17,63 @@ function Network{ S, T }( sparams::Array{ S, 2 }, measures::Array{ T, 2 }, label
 	mrows = size( measures, 1 )
 	mcols = mrows == 0 ? scols : size( measures, 2 )
 	lrows = size( labels, 1 )
+	# index = Dict{ ASCIIString, Int64 }()
+	# for ( i, l ) in enumerate( labels )
+	# 	index[ l ] = i
+	# end
 	srows != scols ? error( "sparams Matrix not square" ) :
 	scols != mcols ? error( "number of columns of sparams and measures differ") :
 	mrows != lrows ? error( "number of rows of measures and labels differ") :
-	Network{ typeof( s ) }( s, m, labels )
+	Network{ typeof( s ) }( s, m, labels ) #, index )
 end
-Network{ T }( sparams::Array{ T, 2 } ) = Network( sparams, Matrix{ T }(), ASCIIString[] )
+Network{ T }( sparams::Array{ T, 2 } ) = Network( sparams, Matrix{ T }() )
 export Network
 
-const UIsp = [  0.0			1.0;
-				1.0			0.0 ]
-const UImeas = [ 	√(2Z0) 	√(2Z0);
-					√2/√Z0 -√2/√Z0	]
-const UIlab = [ "U", "I" ]
-const UI = Network( UIsp, UImeas, UIlab )
+# measure( S::Network, label::ASCIIString ) = S.measure[ S.index[ label ] ]
+function measure( S::Network, label::ASCIIString )
+	for ( i, l ) in enumerate( S.labels )
+		if l == label
+			return S.measures[ i, : ]
+		end
+	end
+end
+export measure
+
+voltage( S::Network, component::ASCIIString ) = measure( S, "$( component )-U")
+voltage( S::Network ) = component -> voltage( S, component )
+export  voltage
+
+current( S::Network, component::ASCIIString ) = measure( S, "$( component )-I")
+current( S::Network ) = component -> current( S, component )
+export current
+
+power( S::Network, component::ASCIIString ) = voltage( S, component ) * conj( current( S, component ) ) / 2
+power( S::Network ) = component -> power( S, component )
+export power
+
+function UI( component::ASCIIString = "" )
+	UIsp = [  	0.0	1.0;
+				1.0	0.0 ]
+	UImeas = [ 	√(2Z0) 	√(2Z0);
+				√2/√Z0 -√2/√Z0	]
+	UIlab = [ "$( component )-U", "$( component )-I" ]
+	Network( UIsp, UImeas, UIlab )
+end
 export UI
 
-const UI2sp = [ 0.0			1.0 		0.0 		0.0;
+function UI2( component::ASCIIString = "" )
+	UI2sp = [ 	0.0			1.0 		0.0 		0.0;
 				1.0			0.0			0.0			0.0;
 				0.0			0.0			0.0			1.0;
 				0.0			0.0			1.0			0.0 ]
-const UI2meas = [ 	√(2Z0) 		√(2Z0)		-√(2Z0) 	-√(2Z0);  
+	UI2meas = [ 	√(2Z0) 		√(2Z0)		-√(2Z0) 	-√(2Z0);  
 					1/√(2Z0)	-1/√(2Z0)	1/√(2Z0)	-1/√(2Z0)	]
-const UI2lab = [ "U", "I" ]
-const UI2 = Network( UI2sp, UI2meas, UI2lab )
+	UI2lab = [ "$( component )-U", "$( component )-I" ]
+	Network( UI2sp, UI2meas, UI2lab )
+end
 export UI2
  
-const TEEsp = [ 	-1.0/3  2.0/3  2.0/3;
+const TEEsp = [	-1.0/3  2.0/3  2.0/3;
 				 2.0/3 -1.0/3  2.0/3;
 				 2.0/3  2.0/3 -1.0/3 ]
 const Tee = Network( TEEsp )
@@ -60,12 +88,11 @@ through( z ) = through( z, Z0 )
 export through
 
 function connect( SN::Network, k::Int, TN::Network, l::Int ) 
-	S = SN.sparams
-	T = TN.sparams
+	S, T = promote( SN.sparams, TN.sparams )
 	nS = size( S )[ 1 ]
 	nT = size( T )[ 1 ]
 	nR = nS + nT - 2
-	sparams = zeros( C, nR, nR )
+	sparams = zeros( eltype( S ), nR, nR )
 	Skj = S[ k, : ]
 	Tlj = T[ l, : ]
 	Sik = S[ :, k]
@@ -137,12 +164,11 @@ function connect( SN::Network, k::Int, TN::Network, l::Int )
 			sparams[ i + nS - 2, 	j + nS - 2 	] = T[ i, j ] + Tlj[ j ] * fak2
 		end
 	end
-	A = SN.measures
-	B = TN.measures
+	A, B = promote( SN.measures, TN.measures )
 	nA = size( A )[ 1 ]
 	nB = size( B )[ 1 ]
 	nM = nA + nB
-	measures = zeros( C, nM, nR )
+	measures = zeros( eltype( A ), nM, nR )
 	if nA > 0
 		Aik = A[ :, k]
 		for i in 1:nA
@@ -196,7 +222,7 @@ function connect( SN::Network, k::Int, l::Int )
 		S = SN.sparams
 		nS = size( S )[ 1 ]
 		nR = nS - 2
-		sparams = zeros( C, nR, nR )
+		sparams = zeros( eltype( S ), nR, nR )
 		Skj = S[ k, : ]
 		Sik = S[ :, k]
 	 	Slj = S[ l, : ]
@@ -247,7 +273,7 @@ function connect( SN::Network, k::Int, l::Int )
 		end
 		A = SN.measures
 		nA = size( A )[ 1 ]
-		measures = zeros( C, nA, nR )
+		measures = zeros( eltype( A ), nA, nR )
 		Aik = A[ :, k]
 	 	Ail = A[ :, l]
 		
@@ -270,12 +296,12 @@ function connect( SN::Network, k::Int, l::Int )
 end
 export connect
 
-instr_shunt( sh::Network ) = connect( sh, 1, UI, 2 )
-instr_through( th::Network ) = connect( connect( th, 1, UI2, 2 ), 1, 3 )
+instr_shunt(   sh::Network, component::ASCIIString = "" ) = connect( sh, 1, UI( component ), 2 )
+instr_through( th::Network, component::ASCIIString = "" ) = connect( connect( th, 1, UI2( component ), 2 ), 1, 3 )
 export instr_shunt, instr_through
 
 parallel( sh1::Network, sh2::Network ) = connect( connect( Tee, 1, sh1, 1 ), 1, sh2, 1 )
-serial( th::Network, sh::Network )   	 = connect( th, 2, sh, 1 )
+serial(    th::Network,  sh::Network ) = connect( th, 2, sh, 1 )
 export parallel, serial
 
 y( z ) = 1 / z
