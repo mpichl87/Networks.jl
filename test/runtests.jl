@@ -9,4 +9,3 @@ using Networks
 
 # @test Networks.connect( through( 0 ), 2, shunt( Z0 ), 1 ) = Network( shunt( Z0 ) )
 
-@test 1 = 1
