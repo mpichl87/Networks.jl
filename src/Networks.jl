@@ -1,5 +1,6 @@
 __precompile__()
 module Networks 
+importall Base
 
 const Z0 = 50.0
 export Z0
@@ -28,6 +29,9 @@ function Network{ S, T }( sparams::Array{ S, 2 }, measures::Array{ T, 2 }, label
 end
 Network{ T }( sparams::Array{ T, 2 } ) = Network( sparams, Matrix{ T }() )
 export Network
+
+==( nw1::Network, nw2::Network ) = nw1.sparams == nw2.sparams && nw1.measures == nw2.measures && nw1.labels == nw2.labels
+
 
 # measure( S::Network, label::ASCIIString ) = S.measure[ S.index[ label ] ]
 function measure( S::Network, label::ASCIIString )
