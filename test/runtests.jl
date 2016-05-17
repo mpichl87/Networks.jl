@@ -1,7 +1,7 @@
 using Base.Test
 using Networks 
 
-# @test shunt( Z0 ) = Network( [ 0 ] )
+@test shunt( Z0 ) == Network( [ 0 ] )
 # @test shunt( 0 )  = Network( [ -1 ] )
 
 # @test through( 0 ) = Network( [  0 1;
