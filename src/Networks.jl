@@ -9,21 +9,28 @@ type Network{ T <: Number }
 	sparams::Array{ T, 2 }
 	measures::Array{ T, 2 }
 	labels::Array{ ASCIIString, 1 }
-	# index::Dict{ ASCIIString, Int64 }
+	function Network{ T }( sparams::Array{ T, 2 }, measures::Array{ T, 2 }, labels::Array{ ASCIIString, 1 } )
+		srows = size( sparams, 1 )
+		scols = srows == 0 ? 0 : size( sparams, 2 )
+		mrows = size( measures, 1 )
+		mcols = mrows == 0 ? scols : size( measures, 2 )
+		lrows = size( labels, 1 )
+		srows != scols ? error( "sparams Matrix not square" ) :
+		scols != mcols ? error( "number of columns of sparams and measures differ") :
+		mrows != lrows ? error( "number of rows of measures and labels differ") :
+		new( sparams, measures, labels )
+	end
 end
-function Network{ S, T }( sparams::Array{ S, 2 }, measures::Array{ T, 2 }, labels::Array{ ASCIIString, 1 } = ASCIIString[] )
-	s, m = promote( sparams, measures )
-	srows = size( sparams, 1 )
-	scols = srows == 0 ? 0 : size( sparams, 2 )
-	mrows = size( measures, 1 )
-	mcols = mrows == 0 ? scols : size( measures, 2 )
-	lrows = size( labels, 1 )
-	srows != scols ? error( "sparams Matrix not square" ) :
-	scols != mcols ? error( "number of columns of sparams and measures differ") :
-	mrows != lrows ? error( "number of rows of measures and labels differ") :
-	Network{ typeof( s ) }( s, m, labels ) #, index )
+function Network{ T }( sparams::Array{ T, 2 }, measures::Array{ T, 2 }, labels::Array{ ASCIIString, 1 } ) 
+	Network{ T }( sparams, measures, labels )
 end
-Network{ T }( sparams::Array{ T, 2 } ) = Network( sparams, Matrix{ T }() )
+function Network{ S, T }( sparams::Array{ S, 2 }, measures::Array{ T, 2 }, labels::Array{ ASCIIString, 1 } )
+	sparams, measures = promote( sparams, measures )
+	Network{ typeof( sparams ) }( sparams, measures, labels )
+end
+function Network{ T }( sparams::Array{ T, 2 } )
+	Network{ T }( sparams, Array{ T, 2 }(), ASCIIString[] ) 
+end
 export Network
 
 function ==( nw1::Network, nw2::Network )
@@ -33,8 +40,6 @@ function ==( nw1::Network, nw2::Network )
 	ok &= nw1.labels == nw2.labels
 end
 
-
-# measure( S::Network, label::ASCIIString ) = S.measure[ S.index[ label ] ]
 function measure( S::Network, label::ASCIIString )
 	for ( i, l ) in enumerate( S.labels )
 		if l == label
@@ -92,7 +97,7 @@ through( z, z0 ) = Network( 1 / ( z + 2z0 ) * [ z 2z0; 2z0 z ] )
 through( z ) = through( z, Z0 )
 export through
 
-function connect( SN::Network, k::Int, TN::Network, l::Int ) 
+function connect{ S, T }( SN::Network{ S }, k::Int, TN::Network{ T }, l::Int ) 
 	S, T = promote( SN.sparams, TN.sparams )
 	nS = size( S )[ 1 ]
 	nT = size( T )[ 1 ]
