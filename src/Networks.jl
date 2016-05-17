@@ -296,6 +296,11 @@ function connect( SN::Network, k::Int, l::Int )
 end
 export connect
 
+function labels!( nw::Network, prefix::ASCIIString )
+	labels = map( l -> "$( prefix )$( l )", nw.labels )
+	Network( nw.sparams, nw.measures, labels )
+end
+
 instr_shunt(   sh::Network, component::ASCIIString = "" ) = connect( sh, 1, UI( component ), 2 )
 instr_through( th::Network, component::ASCIIString = "" ) = connect( connect( th, 1, UI2( component ), 2 ), 1, 3 )
 export instr_shunt, instr_through
