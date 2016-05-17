@@ -18,10 +18,6 @@ function Network{ S, T }( sparams::Array{ S, 2 }, measures::Array{ T, 2 }, label
 	mrows = size( measures, 1 )
 	mcols = mrows == 0 ? scols : size( measures, 2 )
 	lrows = size( labels, 1 )
-	# index = Dict{ ASCIIString, Int64 }()
-	# for ( i, l ) in enumerate( labels )
-	# 	index[ l ] = i
-	# end
 	srows != scols ? error( "sparams Matrix not square" ) :
 	scols != mcols ? error( "number of columns of sparams and measures differ") :
 	mrows != lrows ? error( "number of rows of measures and labels differ") :
@@ -30,7 +26,12 @@ end
 Network{ T }( sparams::Array{ T, 2 } ) = Network( sparams, Matrix{ T }() )
 export Network
 
-==( nw1::Network, nw2::Network ) = nw1.sparams == nw2.sparams && nw1.measures == nw2.measures && nw1.labels == nw2.labels
+function ==( nw1::Network, nw2::Network )
+	ok = true
+	ok &= nw1.sparams == nw2.sparams 
+	ok &= ( length( nw1.measures ) == 0 && length( nw2.measures ) == 0 ) || nw1.measures == nw2.measures
+	ok &= nw1.labels == nw2.labels
+end
 
 
 # measure( S::Network, label::ASCIIString ) = S.measure[ S.index[ label ] ]
