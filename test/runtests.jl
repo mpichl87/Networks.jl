@@ -13,9 +13,3 @@ using Networks
 @test_throws ErrorException Network( [ 1 0; 0 1; 0 1 ] )
 
 @test Network( [ 1 0; 0 1 ] ).sparams == [ 1 0; 0 1 ]
-
-# Network( [ 0.0 1.0;
-# 				 1.0 0.0 ],
-# 				 reshape( [ 0.0 ], 1, 1 ), 
-# 				 [ "test" ] ) == 1
-

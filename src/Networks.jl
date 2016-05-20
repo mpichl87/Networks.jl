@@ -359,4 +359,11 @@ cap( c, r, ω ) = ser( r, z_c( c, ω ) )
 ind( l, r, ω ) = ser( r, z_l( l, ω ) )
 export cap, ind
 
+function pin( Rsf, Ct ) 
+	return function ( state, ω )
+		state ? Rsf : z_c( Ct, ω )	
+	end
+end
+export pin
+
 end
