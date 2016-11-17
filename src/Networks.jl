@@ -3,13 +3,13 @@ module Networks
 importall Base
 
 const Z0 = 50.0
-export Z0
+export Z0 
 
-type Network{ T <: Number }
-	sparams::Array{ T, 2 }
-	measures::Array{ T, 2 }
+type Network{ NumType <: Number }
+	sparams::Array{ NumType, 2 }
+	measures::Array{ NumType, 2 }
 	labels::Array{ String, 1 }
-	function Network{ T }( sparams::Array{ T, 2 }, measures::Array{ T, 2 }, labels::Array{ String, 1 } )
+	function Network{ NumType }( sparams::Array{ NumType, 2 }, measures::Array{ NumType, 2 }, labels::Array{ String, 1 } )
 		srows = size( sparams, 1 )
 		scols = srows == 0 ? 0 : size( sparams, 2 )
 		mrows = size( measures, 1 )
@@ -21,15 +21,15 @@ type Network{ T <: Number }
 		new( sparams, measures, labels )
 	end
 end
-function Network{ T }( sparams::Array{ T, 2 }, measures::Array{ T, 2 }, labels::Array{ String, 1 } )
-	Network{ T }( sparams, measures, labels )
+function Network{ NumType }( sparams::Array{ NumType, 2 }, measures::Array{ NumType, 2 }, labels::Array{ String, 1 } )
+	Network{ NumType }( sparams, measures, labels )
 end
-function Network{ S, T }( sparams::Array{ S, 2 }, measures::Array{ T, 2 }, labels::Array{ String, 1 } )
+function Network{ NumType1, NumType2 }( sparams::Array{ NumType1, 2 }, measures::Array{ NumType2, 2 }, labels::Array{ String, 1 } )
 	sparams, measures = promote( sparams, measures )
 	Network{ typeof( sparams ) }( sparams, measures, labels )
 end
-function Network{ T }( sparams::Array{ T, 2 } )
-	Network{ T }( sparams, Array{ T, 2 }(), String[] )
+function Network{ NumType }( sparams::Array{ NumType, 2 } )
+	Network{ NumType }( sparams, Array{ NumType, 2 }(), String[] )
 end
 export Network
 
@@ -97,8 +97,8 @@ through( z, z0 ) = Network( 1 / ( z + 2z0 ) * [ z 2z0; 2z0 z ] )
 through( z ) = through( z, Z0 )
 export through
 
-function connect{ S, T }( SN::Network{ S }, k::Int, TN::Network{ T }, l::Int )
-	S, T = promote( SN.sparams, TN.sparams )
+function connect{ NumType1, NumType2 }( N1::Network{ NumType1 }, k::Int, N2::Network{ NumType2 }, l::Int )
+	S, T = promote( N1.sparams, N2.sparams )
 	nS = size( S )[ 1 ]
 	nT = size( T )[ 1 ]
 	nR = nS + nT - 2
@@ -174,7 +174,7 @@ function connect{ S, T }( SN::Network{ S }, k::Int, TN::Network{ T }, l::Int )
 			sparams[ i + nS - 2, 	j + nS - 2 	] = T[ i, j ] + Tlj[ j ] * fak2
 		end
 	end
-	A, B = promote( SN.measures, TN.measures )
+	A, B = promote( N1.measures, N2.measures )
 	nA = size( A )[ 1 ]
 	nB = size( B )[ 1 ]
 	nM = nA + nB
@@ -218,7 +218,7 @@ function connect{ S, T }( SN::Network{ S }, k::Int, TN::Network{ T }, l::Int )
 
 		end
 	end
-	labels 		= [ SN.labels; 	TN.labels ]
+	labels 		= [ N1.labels; 	N2.labels ]
 	Network( sparams, measures, labels )
 end
 
