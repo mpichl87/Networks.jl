@@ -1,6 +1,6 @@
 __precompile__()
 module Networks
-importall Base
+import Base.==
 
 const Z0 = 50.0
 export Z0
@@ -127,7 +127,7 @@ const TEEsp = [	-1.0/3  2.0/3  2.0/3;
 				 				 2.0/3  2.0/3 -1.0/3 ]
 
 """
-		TEEsp
+		Tee
 
 3-port tee network.
 """
@@ -155,11 +155,11 @@ through( z ) = through( z, Z0 )
 export through
 
 """
-		connect( N1, k, N2, l )
+		conn( N1, k, N2, l )
 
 Connects port k of network N1 with port l of Network N2 and returns the resulting network.
 """
-function connect{ NumType1, NumType2 }( N1::Network{ NumType1 }, k::Int, N2::Network{ NumType2 }, l::Int )
+function conn{ NumType1, NumType2 }( N1::Network{ NumType1 }, k::Int, N2::Network{ NumType2 }, l::Int )
 	S, T = promote( N1.sparams, N2.sparams )
 	nS = size( S )[ 1 ]
 	nT = size( T )[ 1 ]
@@ -284,11 +284,12 @@ function connect{ NumType1, NumType2 }( N1::Network{ NumType1 }, k::Int, N2::Net
 	Network( sparams, measures, labels )
 end
 
-"""n		connect( SN, k, l )
+"""
+		conn( SN, k, l )
 
 Connects port k of network SN with port l of the same network and returns the resulting network.
 """
-function connect( SN::Network, k::Int, l::Int )
+function conn( SN::Network, k::Int, l::Int )
 	if k == l
 		SN
 	else
@@ -370,10 +371,10 @@ function connect( SN::Network, k::Int, l::Int )
 		Network( sparams, measures, labels )
 	end
 end
-export connect
+export conn
 
 """
-		prefix_labels( nw, prefix )
+		prefix_labels!( nw, prefix )
 
 Prefixes all labels of a network with a common prefix.
 """
@@ -387,14 +388,14 @@ end
 
 Instrumentates a shunt 1-port network. Adds voltage and current measurement ports labeled with component.
 """
-instr_shunt(   sh::Network, component::String = "" ) = connect( sh, 1, UI( component ), 2 )
+instr_shunt(   sh::Network, component::String = "" ) = conn( sh, 1, UI( component ), 2 )
 
 """
 		instr_through( sh, component )
 
 Instrumentates a through 2-port network. Adds voltage and current measurement ports labeled with component.
 """
-instr_through( th::Network, component::String = "" ) = connect( connect( th, 1, UI2( component ), 2 ), 1, 3 )
+instr_through( th::Network, component::String = "" ) = conn( conn( th, 1, UI2( component ), 2 ), 1, 3 )
 export instr_shunt, instr_through
 
 """
@@ -402,14 +403,14 @@ export instr_shunt, instr_through
 
 Connects two shunt networks in parallel.
 """
-parallel( sh1::Network, sh2::Network ) = connect( connect( Tee, 1, sh1, 1 ), 1, sh2, 1 )
+parallel( sh1::Network, sh2::Network ) = conn( conn( Tee, 1, sh1, 1 ), 1, sh2, 1 )
 
 """
 		serial( th, sh )
 
 Connects a through network in series to a shunt network.
 """
-serial(    th::Network,  sh::Network ) = connect( th, 2, sh, 1 )
+serial(    th::Network,  sh::Network ) = conn( th, 2, sh, 1 )
 export parallel, serial
 
 """
