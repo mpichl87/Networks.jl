@@ -10,4 +10,7 @@ makedocs(
 
 deploydocs(
   repo = "github.com/mpichl87/Networks.jl.git"
+  target = "build",
+  deps = nothing,
+  make = nothing,
 )
