@@ -15,5 +15,5 @@ using Networks
 @test Network( [ 1 0; 0 1 ] ).sparams == [ 1 0; 0 1 ]
 
 info( "pwd: $( pwd() )" )
-info( "project dir: $( readdir( ".." ) )" )
-info( "docs dir: $( readdir( "../docs" ) )" )
+info( "project dir: $( readdir( Pkg.dir( "Networks" ) ) )" )
+info( "docs dir: $( readdir( "$(Pkg.dir( "Networks" ))/docs" ) )" )
