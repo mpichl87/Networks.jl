@@ -17,4 +17,4 @@ using Networks
 
 info( "pwd: $( pwd() )" )
 
-info( "project dir: $( readdir( "." ) )" )
+info( "project dir: $( readdir( ".." ) )" )
