@@ -4,8 +4,7 @@ os:
   - linux
   - osx
 julia:
-  - 0.4
-  - nightly
+  - 0.6
 notifications:
   email: false
 script:
@@ -13,3 +12,5 @@ script:
   - julia -e 'Pkg.clone( pwd() ); Pkg.build( "Networks" ); Pkg.test( "Networks"; coverage = true )'
 after_success:
   - julia -e 'cd( Pkg.dir( "Networks" ) ); Pkg.add( "Coverage" ); using Coverage; Coveralls.submit( Coveralls.process_folder() )'
+  - julia -e 'Pkg.add("Documenter")'
+  - julia -e 'cd( Pkg.dir( "Networks" ) ); include( joinpath( "docs", "make.jl " ) )'
