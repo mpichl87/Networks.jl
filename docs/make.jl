@@ -9,8 +9,10 @@ makedocs(
 )
 
 deploydocs(
-  repo = "github.com/mpichl87/Networks.jl.git"
+  repo = "github.com/mpichl87/Networks.jl.git",
   target = "build",
+  latest = "master",
+  julia = "0.5",
   deps = nothing,
-  make = nothing,
+  make = nothing
 )

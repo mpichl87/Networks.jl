@@ -1,0 +1,1 @@
+cmd: julia --color=yes docs/make.jl
